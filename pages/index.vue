@@ -1,78 +1,61 @@
 <template>
-  <div class="container">
-    <div>
-      <Logo />
-      <h1 class="title">
-        vue-movie-app
-      </h1>
-      <div class="links">
-        <a
-          href="https://nuxtjs.org/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="button--green"
-        >
-          Documentation
-        </a>
-        <a
-          href="https://github.com/nuxt/nuxt.js"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="button--grey"
-        >
-          GitHub
-        </a>
+  <main class="p-10">
+    <form @submit.prevent="search">
+      <div class="flex justify-center m-auto">
+        <input v-model="q" type="text" placeholder="search" class="rounded-md lg:w-2/12 bg-gray-100 pl-4">
+        <button type="submit" class="bg-blue-300 p-2 rounded-md ml-4 text-white">Search</button>
+      </div>
+    </form>
+    <div class="flex flex-wrap justify-around">
+      <div v-for="img of imgs" :key="img.title" class="w-64 bg-purple-300 p-1 rounded-md mt-4">
+        <img :src="img.poster" alt="">
+        <div class="text-center text-xl font-extrabold">{{img.title}}</div>
+        <div class="text-center">{{img.date}}</div>
       </div>
     </div>
-  </div>
+  </main>
 </template>
 
 <script>
-export default {}
+  const url = "https://api.themoviedb.org/3";
+  const baseUrl = url + '/discover/movie?sort_by=popularity.desc&api_key=04c35731a5ee918f014970082a0088b1&page=1';
+  const searchURL = url + '/search/movie?&api_key=04c35731a5ee918f014970082a0088b1&query=';
+  const bg = 'https://image.tmdb.org/t/p/w1280';
+  export default {
+    data: () => ({
+      imgs: [],
+      q: ""
+    }),
+    methods: {
+      getFilms: async function () {
+        const response = await fetch(baseUrl);
+        this.imgs = this.parseImgResponse(await response.json())
+      },
+
+      parseImgResponse(movies) {
+        return movies.results.reduce((acc, movie) => {
+          if (!movie.poster_path) {
+            return acc
+          }
+          acc.push({
+            poster: `${bg}${movie.poster_path}`,
+            date: movie.release_date,
+            title: movie.title
+          });
+          return acc;
+        }, []);
+      },
+
+      search: async function () {
+        if (this.q === "") {
+          return;
+        }
+        const response = await fetch(`${searchURL}${this.q}`);
+        this.imgs = this.parseImgResponse(await response.json());
+      }
+    },
+    mounted() {
+      this.getFilms()
+    }
+  }
 </script>
-
-<style>
-/* Sample `apply` at-rules with Tailwind CSS
-.container {
-@apply min-h-screen flex justify-center items-center text-center mx-auto;
-}
-*/
-.container {
-  margin: 0 auto;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
-
-.title {
-  font-family:
-    'Quicksand',
-    'Source Sans Pro',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
-  display: block;
-  font-weight: 300;
-  font-size: 100px;
-  color: #35495e;
-  letter-spacing: 1px;
-}
-
-.subtitle {
-  font-weight: 300;
-  font-size: 42px;
-  color: #526488;
-  word-spacing: 5px;
-  padding-bottom: 15px;
-}
-
-.links {
-  padding-top: 15px;
-}
-</style>
